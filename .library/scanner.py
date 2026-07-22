@@ -573,6 +573,7 @@ def extract_3mf_preview(file_path: Path, content_hash: str) -> Optional[str]:
 def scan_files(
     conn: sqlite3.Connection,
     folder_ids: dict[str, int],
+    scan_id: Optional[int] = None,
 ) -> int:
     """
     Index files for all leaf folders, compute hashes, extract 3MF previews.
@@ -583,6 +584,8 @@ def scan_files(
         Open database connection.
     folder_ids : dict[str, int]
         Mapping of folder path to DB id from scan_folders.
+    scan_id : Optional[int]
+        Scan status row ID for progress updates.
 
     Returns
     -------
@@ -591,11 +594,12 @@ def scan_files(
     """
     now = datetime.now(timezone.utc).isoformat()
     total_files = 0
+    processed_count = 0
 
+    # First pass: count total files for accurate progress
+    all_files: list[tuple[Path, int]] = []
     for folder_path_str, folder_id in folder_ids.items():
         folder_path = Path(folder_path_str)
-
-        # For synthetic folders, collect from the category root
         is_synthetic = "(Loose Files)" in folder_path_str
         if is_synthetic:
             actual_dir = folder_path.parent
@@ -604,7 +608,6 @@ def scan_files(
                 if f.is_file() and f.suffix.lower().lstrip(".") in SUPPORTED_FORMATS
             ]
         else:
-            # Check if folder is a leaf
             row = conn.execute(
                 "SELECT is_leaf FROM folders WHERE id = ?", (folder_id,)
             ).fetchone()
@@ -613,37 +616,52 @@ def scan_files(
             files = collect_files_for_folder(folder_path)
 
         for file_path in files:
-            ext = file_path.suffix.lower().lstrip(".")
-            try:
-                stat = file_path.stat()
-                size_bytes = stat.st_size
-                modified_at = datetime.fromtimestamp(
-                    stat.st_mtime, tz=timezone.utc
-                ).isoformat()
-            except OSError as exc:
-                logger.warning("Cannot stat %s: %s", file_path, exc)
-                continue
+            all_files.append((file_path, folder_id))
 
-            # Check if already in DB with same hash
-            existing = conn.execute(
-                "SELECT id, content_hash FROM files WHERE path = ?",
-                (str(file_path),),
-            ).fetchone()
+    # Update total in scan_status
+    if scan_id:
+        update_scan_status(conn, scan_id, total=len(all_files))
 
-            content_hash = hash_file(file_path)
+    # Second pass: process each file
+    for file_path, folder_id in all_files:
+        ext = file_path.suffix.lower().lstrip(".")
+        processed_count += 1
 
-            if existing and existing["content_hash"] == content_hash:
-                # Unchanged — mark as ok (in case previously missing)
-                conn.execute(
-                    "UPDATE files SET status = 'ok' WHERE id = ?",
-                    (existing["id"],),
-                )
-                continue
+        try:
+            stat = file_path.stat()
+            size_bytes = stat.st_size
+            modified_at = datetime.fromtimestamp(
+                stat.st_mtime, tz=timezone.utc
+            ).isoformat()
+        except OSError as exc:
+            logger.warning("Cannot stat %s: %s", file_path, exc)
+            # Update progress even on skip
+            if scan_id and processed_count % 20 == 0:
+                update_scan_status(conn, scan_id, processed=processed_count)
+            continue
 
-            # Extract 3MF preview if applicable
-            thumbnail: Optional[str] = None
-            if ext == "3mf":
-                thumbnail = extract_3mf_preview(file_path, content_hash)
+        # Check if already in DB with same hash
+        existing = conn.execute(
+            "SELECT id, content_hash FROM files WHERE path = ?",
+            (str(file_path),),
+        ).fetchone()
+
+        content_hash = hash_file(file_path)
+
+        if existing and existing["content_hash"] == content_hash:
+            conn.execute(
+                "UPDATE files SET status = 'ok' WHERE id = ?",
+                (existing["id"],),
+            )
+            # Update progress every 20 files
+            if scan_id and processed_count % 20 == 0:
+                update_scan_status(conn, scan_id, processed=processed_count)
+            continue
+
+        # Extract 3MF preview if applicable
+        thumbnail: Optional[str] = None
+        if ext == "3mf":
+            thumbnail = extract_3mf_preview(file_path, content_hash)
 
             if existing:
                 # File changed — update
@@ -690,6 +708,14 @@ def scan_files(
                 )
 
             total_files += 1
+
+            # Update progress every 20 files
+            if scan_id and processed_count % 20 == 0:
+                update_scan_status(conn, scan_id, processed=processed_count)
+
+    # Final progress update
+    if scan_id:
+        update_scan_status(conn, scan_id, processed=processed_count)
 
     conn.commit()
     logger.info("Indexed %d files (new or changed)", total_files)
@@ -880,11 +906,9 @@ def run_full_scan() -> None:
 
         # Phase 1: Scan folders
         folder_ids = scan_folders(conn)
-        update_scan_status(conn, scan_id, total=len(folder_ids))
 
-        # Phase 2: Index files
-        file_count = scan_files(conn, folder_ids)
-        update_scan_status(conn, scan_id, processed=file_count)
+        # Phase 2: Index files (with incremental progress)
+        file_count = scan_files(conn, folder_ids, scan_id=scan_id)
 
         # Phase 3: Mark missing files
         mark_missing_files(conn)
