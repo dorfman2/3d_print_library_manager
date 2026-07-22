@@ -1,0 +1,87 @@
+# ==================================================
+# 3D Print Files — user's personal model library
+# ==================================================
+*.stl
+*.3mf
+*.obj
+*.step
+*.stp
+*.f3d
+*.bgcode
+*.gcode
+*.g
+*.gco
+
+# ==================================================
+# Slicer & CAD project files
+# ==================================================
+*.3mj
+*.amf
+*.ply
+*.wrl
+*.x3d
+
+# ==================================================
+# Category folders (personal 3D print collection)
+# ==================================================
+/0 - Calibration/
+/1 - Machines/
+/2 - Office/
+/3 - Tools and Organization/
+/4 - Electronics/
+/5 - Repairs and Replacements/
+/6 - Work Fixtures and Tooling/
+/7 - Work Spare Parts/
+/8 - Mounting/
+/9 - Models and Display/
+
+# ==================================================
+# Generated / runtime data
+# ==================================================
+.library/library.db
+.library/thumbnails/
+
+# ==================================================
+# PII and secrets
+# ==================================================
+.env
+.env.*
+*.pem
+*.key
+*.crt
+credentials*
+secrets*
+
+# ==================================================
+# OS junk
+# ==================================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*~
+
+# ==================================================
+# Python
+# ==================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# ==================================================
+# IDE
+# ==================================================
+.vscode/
+.idea/
+*.code-workspace
+
+# ==================================================
+# Kiro workspace config (personal, not shareable)
+# ==================================================
+.kiro/settings/

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Print Library</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <h1 class="header__title">3D Print Library</h1>
+    <div class="header__controls">
+      <input type="search" id="search-input" class="header__search"
+             placeholder="Search folders and tags…" aria-label="Search folders and tags">
+      <button id="scan-btn" class="header__scan-btn" title="Rescan library" aria-label="Rescan library">&#x21BA;</button>
+    </div>
+    <div id="scan-progress" class="header__progress" hidden>
+      <div class="progress-bar"><div class="progress-bar__fill" id="progress-fill"></div></div>
+      <span id="progress-text" class="progress-text"></span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <section class="sidebar__section">
+        <h2 class="sidebar__heading">Categories</h2>
+        <ul id="category-list" class="sidebar__list" role="list"></ul>
+      </section>
+      <section class="sidebar__section">
+        <h2 class="sidebar__heading">Tags</h2>
+        <ul id="tag-list" class="sidebar__list" role="list"></ul>
+      </section>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main" id="main-content">
+      <!-- Filter chips -->
+      <div id="filter-chips" class="filter-chips" role="list" aria-label="Active filters"></div>
+
+      <!-- Breadcrumb (Level 2) -->
+      <nav id="breadcrumb" class="breadcrumb" hidden aria-label="Breadcrumb">
+        <button id="back-btn" class="breadcrumb__back" aria-label="Go back">&#x2190; Back</button>
+        <span id="breadcrumb-text" class="breadcrumb__text"></span>
+      </nav>
+
+      <!-- WebGL warning banner -->
+      <div id="webgl-banner" class="webgl-banner" hidden role="alert">
+        WebGL is not available. Thumbnails will show format icons instead.
+      </div>
+
+      <!-- Card grid -->
+      <div id="card-grid" class="card-grid" role="list" aria-label="Content grid"></div>
+    </main>
+  </div>
+
+  <!-- Three.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/STLLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/3MFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/OBJLoader.js"></script>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#e67e22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Fusion 360 style icon: gear/parametric -->
+  <circle cx="32" cy="28" r="14" fill="#fef3e0"/>
+  <circle cx="32" cy="28" r="6" fill="none"/>
+  <path d="M32,14 L34,18 L30,18 Z"/>
+  <path d="M32,42 L34,38 L30,38 Z"/>
+  <path d="M18,28 L22,30 L22,26 Z"/>
+  <path d="M46,28 L42,30 L42,26 Z"/>
+  <path d="M22,18 L25,21 L23,23 Z"/>
+  <path d="M42,38 L39,35 L41,33 Z"/>
+  <path d="M42,18 L39,21 L41,23 Z"/>
+  <path d="M22,38 L25,35 L23,33 Z"/>
+  <text x="22" y="58" font-size="10" font-family="sans-serif" fill="#e67e22" stroke="none">F3D</text>
+</svg>
