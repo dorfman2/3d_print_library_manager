@@ -269,7 +269,7 @@ function renderFolderGrid() {
     // Thumbnail
     const thumb = document.createElement('div');
     thumb.className = 'card__thumb';
-    if (folder.cover_thumbnail) {
+    if (folder.cover_thumbnail && folder.cover_thumbnail !== '__failed__') {
       const img = document.createElement('img');
       img.src = `/thumbnails/${folder.cover_thumbnail}`;
       img.alt = folder.name;
@@ -530,6 +530,13 @@ function createFileCard(file, folder) {
     img.alt = file.filename;
     img.loading = 'lazy';
     thumb.appendChild(img);
+  } else if (!file.thumbnail && RENDERABLE_FORMATS.has(file.format)) {
+    // No thumbnail yet and renderable — show placeholder, will render later
+    const icon = document.createElement('img');
+    icon.className = 'card__icon card__icon--pending';
+    icon.src = getFormatIcon(file.format);
+    icon.alt = file.format;
+    thumb.appendChild(icon);
   } else {
     const icon = document.createElement('img');
     icon.className = 'card__icon';
@@ -714,9 +721,11 @@ function renderThumbnails() {
     const format = card.dataset.format;
     const thumb = card.querySelector('.card__thumb img');
 
-    // Only render if: renderable format, no existing thumbnail, and not failed
+    // Only render if: renderable format, no existing thumbnail, not failed
     if (!RENDERABLE_FORMATS.has(format)) continue;
     if (thumb && !thumb.classList.contains('card__icon')) continue;
+    // Skip if thumbnail is already cached (check data attribute)
+    if (card.dataset.thumbnailStatus === 'done' || card.dataset.thumbnailStatus === 'failed') continue;
 
     observer.observe(card);
   }
@@ -738,6 +747,41 @@ function processRenderQueue() {
   }
 }
 
+// Shared renderer — prevents WebGL context exhaustion
+let _sharedRenderer = null;
+
+function getSharedRenderer() {
+  if (!_sharedRenderer) {
+    _sharedRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    _sharedRenderer.setSize(256, 256);
+  }
+  // Check for context loss and recreate if needed
+  if (_sharedRenderer.getContext().isContextLost()) {
+    logger.warn('WebGL context lost, recreating renderer');
+    _sharedRenderer.dispose();
+    _sharedRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    _sharedRenderer.setSize(256, 256);
+  }
+  return _sharedRenderer;
+}
+
+function disposeObject(obj) {
+  if (!obj) return;
+  if (obj.geometry) {
+    obj.geometry.dispose();
+  }
+  if (obj.material) {
+    if (Array.isArray(obj.material)) {
+      obj.material.forEach(m => m.dispose());
+    } else {
+      obj.material.dispose();
+    }
+  }
+  if (obj.children) {
+    obj.children.forEach(child => disposeObject(child));
+  }
+}
+
 async function renderSingleThumbnail(card) {
   const fileId = parseInt(card.dataset.fileId, 10);
   const format = card.dataset.format;
@@ -745,7 +789,7 @@ async function renderSingleThumbnail(card) {
   try {
     // Fetch raw file
     const resp = await fetch(`/api/files/${fileId}/raw`);
-    if (!resp.ok) throw new Error('Failed to fetch file');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const buffer = await resp.arrayBuffer();
 
     // Load geometry
@@ -765,14 +809,7 @@ async function renderSingleThumbnail(card) {
       object = loader.parse(text);
     } else if (format === '3mf') {
       const loader = new THREE.ThreeMFLoader();
-      object = await new Promise((resolve, reject) => {
-        try {
-          const result = loader.parse(buffer);
-          resolve(result);
-        } catch (e) {
-          reject(e);
-        }
-      });
+      object = loader.parse(buffer);
     }
 
     if (!object) throw new Error('No geometry loaded');
@@ -782,8 +819,7 @@ async function renderSingleThumbnail(card) {
     scene.background = new THREE.Color(0xe8e8e8);
 
     // Lighting
-    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambient);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
     const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
     dir1.position.set(1, 2, 3);
     scene.add(dir1);
@@ -798,8 +834,10 @@ async function renderSingleThumbnail(card) {
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const distance = maxDim * 1.8;
 
+    if (maxDim === 0 || !isFinite(maxDim)) throw new Error('Empty or invalid geometry');
+
+    const distance = maxDim * 1.8;
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, distance * 10);
     camera.position.set(
       center.x + distance * 0.5,
@@ -808,14 +846,16 @@ async function renderSingleThumbnail(card) {
     );
     camera.lookAt(center);
 
-    // Render
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setSize(256, 256);
+    // Render using shared renderer
+    const renderer = getSharedRenderer();
     renderer.render(scene, camera);
 
     // Get image data
     const dataUrl = renderer.domElement.toDataURL('image/png');
-    renderer.dispose();
+
+    // Cleanup scene objects (but NOT the renderer)
+    disposeObject(object);
+    scene.clear();
 
     // POST to server
     const uploadResp = await api('/api/thumbnails', {
@@ -825,7 +865,6 @@ async function renderSingleThumbnail(card) {
     });
 
     if (uploadResp && uploadResp.thumbnail) {
-      // Update card thumbnail
       const thumbDiv = card.querySelector('.card__thumb');
       thumbDiv.innerHTML = '';
       const img = document.createElement('img');
@@ -833,8 +872,10 @@ async function renderSingleThumbnail(card) {
       img.alt = '';
       thumbDiv.appendChild(img);
     }
+    card.dataset.thumbnailStatus = 'done';
   } catch (e) {
-    logger.debug('Thumbnail render failed', { fileId, format, error: e.message });
+    logger.warn('Thumbnail render failed', { fileId, format, error: e.message });
+    card.dataset.thumbnailStatus = 'failed';
     // Mark as failed so we don't retry
     api('/api/thumbnails', {
       method: 'POST',
