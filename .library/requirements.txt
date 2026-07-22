@@ -1,1 +1,4 @@
 flask>=3.0
+
+# Dev / test (optional)
+pytest>=8.0

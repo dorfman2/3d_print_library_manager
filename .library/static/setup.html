@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Print Library — Setup</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .setup-container {
+            max-width: 640px;
+            margin: 60px auto;
+            padding: 32px;
+            background: var(--card-bg, #fff);
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .setup-container h1 {
+            margin: 0 0 8px;
+            font-size: 1.6rem;
+        }
+        .setup-container p.subtitle {
+            color: #666;
+            margin: 0 0 24px;
+        }
+        .step { display: none; }
+        .step.active { display: block; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+        .form-group .hint {
+            font-size: 0.82rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        .radio-group {
+            margin: 16px 0;
+        }
+        .radio-option {
+            display: block;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border: 2px solid #e8e8e8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        .radio-option:hover {
+            border-color: #999;
+        }
+        .radio-option.selected {
+            border-color: #4a90d9;
+            background: #f0f6ff;
+        }
+        .radio-option input[type="radio"] {
+            margin-right: 10px;
+        }
+        .radio-option .option-title {
+            font-weight: 600;
+        }
+        .radio-option .option-desc {
+            display: block;
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 4px;
+            padding-left: 26px;
+        }
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: #4a90d9;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #357abd;
+        }
+        .btn-secondary {
+            background: #e8e8e8;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #ddd;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            margin-top: 8px;
+            display: none;
+        }
+        .step-indicator {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ddd;
+        }
+        .step-dot.active {
+            background: #4a90d9;
+        }
+        .setup-done {
+            text-align: center;
+            padding: 40px 0;
+        }
+        .setup-done h2 {
+            margin-bottom: 12px;
+        }
+        .skip-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+            font-size: 0.85rem;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <h1>Welcome to 3D Print Library</h1>
+        <p class="subtitle">Let's set up your library in a few quick steps.</p>
+
+        <div class="step-indicator">
+            <div class="step-dot active" id="dot-1"></div>
+            <div class="step-dot" id="dot-2"></div>
+        </div>
+
+        <!-- Step 1: Folder paths -->
+        <div class="step active" id="step-1">
+            <div class="form-group">
+                <label for="library-folder">Library folder</label>
+                <input type="text" id="library-folder" placeholder="~/3D Prints">
+                <div class="hint">Where your organized 3D print files live (or will live).</div>
+            </div>
+            <div class="form-group">
+                <label for="source-folder">Source folder (for auto-sorting)</label>
+                <input type="text" id="source-folder" placeholder="~/Downloads">
+                <div class="hint">New downloads will be sorted from here into the library.</div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="goToStep(2)">Next →</button>
+            </div>
+            <span class="skip-link" onclick="skipSetup()">Skip setup — configure later</span>
+        </div>
+
+        <!-- Step 2: Category mode -->
+        <div class="step" id="step-2">
+            <div class="form-group">
+                <label>Category setup mode</label>
+                <div class="radio-group">
+                    <label class="radio-option selected" id="opt-starter">
+                        <input type="radio" name="cat-mode" value="starter" checked>
+                        <span class="option-title">Starter library</span>
+                        <span class="option-desc">Seed 19 merged categories and create folders on disk. Best for a new library.</span>
+                    </label>
+                    <div class="warning-box" id="starter-warning">
+                        ⚠️ Your library folder is non-empty. Starter mode may create conflicting folders. Consider "Use existing" instead.
+                    </div>
+                    <label class="radio-option" id="opt-existing">
+                        <input type="radio" name="cat-mode" value="existing">
+                        <span class="option-title">Use existing library</span>
+                        <span class="option-desc">Derive categories from your current folder structure. No folders created.</span>
+                    </label>
+                    <label class="radio-option" id="opt-blank">
+                        <input type="radio" name="cat-mode" value="blank">
+                        <span class="option-title">Blank / Custom</span>
+                        <span class="option-desc">Start with only "Uncategorized". Add your own categories later.</span>
+                    </label>
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+                <button class="btn btn-primary" id="finish-btn" onclick="finishSetup()">Finish Setup</button>
+            </div>
+        </div>
+
+        <!-- Done -->
+        <div class="step" id="step-done">
+            <div class="setup-done">
+                <h2>✓ Setup Complete</h2>
+                <p>Your library is ready. Redirecting…</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const logger = {
+            error: (msg, data) => console.error(msg, data),
+            warn: (msg, data) => console.warn(msg, data),
+            info: (msg, data) => console.info(msg, data),
+            debug: (msg, data) => console.debug(msg, data)
+        };
+
+        let currentStep = 1;
+        let libraryNonEmpty = false;
+
+        // Load defaults from server
+        async function init() {
+            try {
+                const resp = await fetch('/api/config');
+                const cfg = await resp.json();
+                document.getElementById('library-folder').value = cfg.library_folder || '';
+                document.getElementById('source-folder').value = cfg.source_folder || '';
+            } catch (err) {
+                logger.error('Failed to load config', { error: err.message });
+            }
+        }
+
+        function goToStep(step) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.step-dot').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`step-${step}`).classList.add('active');
+            for (let i = 1; i <= step; i++) {
+                document.getElementById(`dot-${i}`).classList.add('active');
+            }
+            currentStep = step;
+
+            if (step === 2) {
+                checkLibraryEmpty();
+            }
+        }
+
+        async function checkLibraryEmpty() {
+            const libPath = document.getElementById('library-folder').value;
+            if (!libPath) return;
+
+            try {
+                // Simple heuristic: check if library has folders via the existing API
+                const resp = await fetch('/api/folders');
+                const folders = await resp.json();
+                libraryNonEmpty = folders.length > 0;
+
+                const warning = document.getElementById('starter-warning');
+                if (libraryNonEmpty) {
+                    warning.style.display = 'block';
+                } else {
+                    warning.style.display = 'none';
+                }
+            } catch (err) {
+                logger.debug('Could not check library state', { error: err.message });
+            }
+        }
+
+        // Radio selection styling
+        document.querySelectorAll('.radio-option input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+                radio.closest('.radio-option').classList.add('selected');
+            });
+        });
+
+        async function finishSetup() {
+            const btn = document.getElementById('finish-btn');
+            btn.disabled = true;
+            btn.textContent = 'Setting up…';
+
+            const libraryFolder = document.getElementById('library-folder').value;
+            const sourceFolder = document.getElementById('source-folder').value;
+            const mode = document.querySelector('input[name="cat-mode"]:checked').value;
+
+            try {
+                // Save config
+                const configResp = await fetch('/api/config', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        library_folder: libraryFolder,
+                        source_folder: sourceFolder,
+                    }),
+                });
+
+                if (!configResp.ok) {
+                    const err = await configResp.json();
+                    alert(err.error || 'Config validation failed');
+                    btn.disabled = false;
+                    btn.textContent = 'Finish Setup';
+                    return;
+                }
+
+                // Set up categories based on mode
+                const setupResp = await fetch('/api/setup/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode }),
+                });
+
+                if (!setupResp.ok) {
+                    const err = await setupResp.json();
+                    alert(err.error || 'Setup failed');
+                    btn.disabled = false;
+                    btn.textContent = 'Finish Setup';
+                    return;
+                }
+
+                // Show done state and redirect
+                document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+                document.getElementById('step-done').classList.add('active');
+                setTimeout(() => { window.location.href = '/'; }, 1500);
+
+            } catch (err) {
+                logger.error('Setup failed', { error: err.message });
+                alert('Setup failed: ' + err.message);
+                btn.disabled = false;
+                btn.textContent = 'Finish Setup';
+            }
+        }
+
+        async function skipSetup() {
+            // Write minimal config so we don't trigger wizard again
+            try {
+                await fetch('/api/setup/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: 'blank' }),
+                });
+                window.location.href = '/';
+            } catch (err) {
+                window.location.href = '/';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

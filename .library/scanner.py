@@ -884,6 +884,66 @@ def update_scan_status(
         conn.commit()
 
 
+def migrate_folder_metadata(old_path: str, new_path: str) -> None:
+    """
+    Migrate folder metadata (tags, notes, cover) from old_path to new_path.
+
+    Used when the Sorter moves a folder or a category rename changes paths,
+    so that tags/notes/cover are not orphaned (EC-1).
+
+    Parameters
+    ----------
+    old_path : str
+        The original absolute path of the folder.
+    new_path : str
+        The new absolute path after the move/rename.
+    """
+    conn = get_db()
+    try:
+        # Check if the old path exists in DB
+        row = conn.execute(
+            "SELECT id FROM folders WHERE path = ?", (old_path,)
+        ).fetchone()
+        if not row:
+            logger.debug(
+                "migrate_folder_metadata: old_path not in DB: %s", old_path
+            )
+            return
+
+        # Check if new_path already exists (would create a conflict)
+        existing = conn.execute(
+            "SELECT id FROM folders WHERE path = ?", (new_path,)
+        ).fetchone()
+        if existing:
+            logger.warning(
+                "migrate_folder_metadata: new_path already exists in DB: %s",
+                new_path,
+            )
+            return
+
+        # Update the path
+        conn.execute(
+            "UPDATE folders SET path = ? WHERE path = ?",
+            (new_path, old_path),
+        )
+        # Also update file paths that start with old_path
+        conn.execute(
+            "UPDATE files SET path = REPLACE(path, ?, ?) WHERE path LIKE ?",
+            (old_path, new_path, old_path + "%"),
+        )
+        conn.commit()
+        logger.info(
+            "Migrated folder metadata: %s -> %s", old_path, new_path
+        )
+    except sqlite3.Error as exc:
+        logger.error(
+            "Failed to migrate folder metadata %s -> %s: %s",
+            old_path, new_path, exc,
+        )
+    finally:
+        conn.close()
+
+
 def run_full_scan() -> None:
     """
     Execute a complete scan: folders, files, tagging, and cleanup.

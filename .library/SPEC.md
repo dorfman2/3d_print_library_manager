@@ -56,11 +56,17 @@ cached to the server as PNGs. No server-side rendering dependencies.
 │   ├── library.db           ← SQLite database
 │   ├── thumbnails/          ← cached PNG thumbnails (by content hash)
 │   ├── scanner.py           ← folder walk, DB population, 3MF preview extraction
-│   ├── server.py            ← Flask server + REST API
+│   ├── server.py            ← Flask server + REST API + sync scheduler
+│   ├── sorter.py            ← 5-phase sync pipeline (ingest from Downloads)
+│   ├── config.py            ← shared config load/save (JSON)
+│   ├── categories.py        ← name cleanup + keyword categorization
 │   ├── requirements.txt     ← Python deps (flask)
 │   └── static/
 │       ├── index.html       ← SPA shell
 │       ├── app.js           ← UI logic + Three.js rendering
+│       ├── sync.html        ← Sync control panel
+│       ├── sync.js          ← Sync panel + category editor
+│       ├── setup.html       ← First-run setup wizard
 │       ├── style.css        ← Layout and theme
 │       └── icons/           ← SVG format icons
 │           ├── step.svg

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Print Library — Sync</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-left">
+            <a href="/" class="header-title">3D Print Library</a>
+        </div>
+        <nav class="header-nav">
+            <a href="/">Browse</a>
+            <a href="/generate">Generate</a>
+            <a href="/sync" class="active">Sync</a>
+        </nav>
+    </header>
+
+    <main class="sync-container">
+        <section class="sync-settings">
+            <h2>Sync Settings</h2>
+
+            <div class="sync-form-group">
+                <label for="sync-source">Source folder</label>
+                <input type="text" id="sync-source" placeholder="~/Downloads">
+                <span class="field-hint">New 3D print files are sorted from here.</span>
+            </div>
+
+            <div class="sync-form-group">
+                <label for="sync-library">Library folder</label>
+                <input type="text" id="sync-library" placeholder="~/3D Prints">
+                <span class="field-hint">Your organized collection.</span>
+            </div>
+
+            <div class="sync-form-group sync-schedule-row">
+                <label>Schedule</label>
+                <div class="schedule-controls">
+                    <label class="radio-inline">
+                        <input type="radio" name="schedule" value="off" checked> Off
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="schedule" value="on"> Every
+                    </label>
+                    <input type="number" id="sync-interval" min="1" max="1440" value="60" class="interval-input">
+                    <span>minutes</span>
+                </div>
+            </div>
+
+            <div class="sync-status-bar">
+                <span class="status-label">Status:</span>
+                <span id="sync-state" class="status-value">Idle</span>
+                <span class="status-sep">|</span>
+                <span class="status-label">Last run:</span>
+                <span id="sync-last-run" class="status-value">Never</span>
+                <span class="status-sep">|</span>
+                <span class="status-label">Next:</span>
+                <span id="sync-next-run" class="status-value">—</span>
+            </div>
+
+            <div class="sync-actions">
+                <button id="btn-save-config" class="btn btn-secondary" onclick="saveConfig()">Save Settings</button>
+                <button id="btn-preview" class="btn btn-secondary" onclick="runPreview()">Preview (Dry Run)</button>
+                <button id="btn-sync" class="btn btn-primary" onclick="runSync()">Run Sync Now</button>
+            </div>
+        </section>
+
+        <section class="sync-log-section">
+            <h3>Preview / Log</h3>
+            <div id="sync-log" class="sync-log">
+                <p class="log-placeholder">Run a preview or sync to see results here.</p>
+            </div>
+        </section>
+
+        <section class="category-editor-section">
+            <h3>Categories <button class="btn btn-small btn-secondary" onclick="addCategory()">+ Add Category</button></h3>
+            <div id="category-editor" class="category-editor">
+                <p class="log-placeholder">Loading categories…</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/sync.js"></script>
+</body>
+</html>

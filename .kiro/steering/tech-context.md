@@ -29,7 +29,11 @@ inclusion: always
 ## Component Relationships and Dependencies
 - `scanner.py` → reads filesystem, writes to `library.db`, extracts 3MF previews to `thumbnails/`
 - `server.py` → reads `library.db`, serves `static/`, serves `thumbnails/`, handles API requests
+- `sorter.py` → 5-phase sync: ZIP preprocessing, index build, categorize, move, clean
+- `config.py` → shared config for viewer + sorter (source folder, library folder, scheduler)
+- `categories.py` → 8-step name cleanup + keyword-based categorization + load/save categories
 - `static/app.js` → fetches from Flask API, renders Three.js thumbnails, POSTs rendered PNGs back to server
+- `static/sync.js` → sync panel UI: config, preview, run, schedule, category editor
 - `library.db` → single source of truth for folders, files, tags, scan state
 - `thumbnails/` → cache dir; keyed by SHA-256 of file content; cleaned on each scan
 

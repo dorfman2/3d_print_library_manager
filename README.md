@@ -13,6 +13,9 @@ A lightweight, browser-based visual library for managing local 3D print file col
 - **Tags and search** — tag folders, filter by category, full-text search
 - **One-click Open/Reveal** — open files in your slicer or reveal in Finder/Explorer
 - **Batch thumbnail generation** — render all pending thumbnails in one go at `/generate`
+- **Auto-sort from Downloads** — ingest new files from a watched folder, auto-categorize by keyword, deduplicate, and organize into the library
+- **Web-based sync controls** — configure source/library folders, run sync or schedule it, preview before executing
+- **Setup wizard** — first-run wizard picks your library location and category mode (starter, use existing, or blank)
 - **Cross-platform** — identical experience on macOS and Windows
 - **Single dependency** — just Flask. Three.js loads from CDN.
 
@@ -156,6 +159,17 @@ launchctl load ~/Library/LaunchAgents/com.3dprint.library.plist
 - Use the **tag sidebar** to filter by tags
 - **Search bar** filters folder names and tags in real-time
 
+### Auto-Sort (Ingest → Browse)
+
+1. Download 3D print files to your normal Downloads folder
+2. Open **http://localhost:5050/sync** → click **Preview (Dry Run)** to see where files would go
+3. Click **Run Sync Now** to move files into the library, auto-categorized by keywords
+4. Newly sorted files appear in the browser immediately (auto-reindex after sync)
+
+**Scheduled sync:** Enable the scheduler on the Sync panel to auto-sort every N minutes.
+
+**Category editor:** Add, rename, or delete categories and edit keyword lists on the Sync panel.
+
 ### File Actions
 
 - **Open** — opens the file in your OS default app (PrusaSlicer, BambuStudio, etc.)
@@ -178,6 +192,9 @@ Click the **↺ Scan** button in the header or run `python scanner.py` from term
 .library/
 ├── scanner.py       ← Filesystem walker, DB indexer, 3MF preview extractor
 ├── server.py        ← Flask REST API + static file server (port 5050)
+├── sorter.py        ← Auto-sort: 5-phase sync pipeline (ingest from Downloads)
+├── config.py        ← Shared config load/save (JSON)
+├── categories.py    ← Category list, keyword scoring, name cleanup
 ├── library.db       ← SQLite database (auto-created)
 ├── thumbnails/      ← Cached PNG thumbnails
 ├── requirements.txt ← flask>=3.0
@@ -230,6 +247,15 @@ mkdir -p docs/screenshots
 # - docs/screenshots/level2-file-grid.png (inside a folder showing files)
 # - docs/screenshots/batch-generate.png (the /generate page)
 ```
+
+## Optional: Windows Tray Wrapper
+
+For a "launch at login" experience on Windows, you can create a thin tray app that:
+1. Starts `server.py` on login
+2. Shows a system tray icon with "Open Library" and "Sync Now" options
+3. Calls `sorter.py` directly — no logic duplication
+
+This is **not required** — the web UI provides all the same controls. The tray wrapper is purely a convenience for users who prefer a desktop-native autostart on Windows. On macOS, use the launchd plist shown in the Deployment section.
 
 ## License
 
