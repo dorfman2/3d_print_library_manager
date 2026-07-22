@@ -634,49 +634,6 @@ function formatSize(bytes) {
 }
 
 // ---------------------------------------------------------------------------
-// Search
-// ---------------------------------------------------------------------------
-
-function setupSearch() {
-  const input = document.getElementById('search-input');
-  let debounceTimer = null;
-  input.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      state.filters.search = input.value.trim();
-      if (state.view === 'level1') {
-        renderFilterChips();
-        renderFolderGrid();
-      }
-    }, 200);
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Back button
-// ---------------------------------------------------------------------------
-
-function setupBackButton() {
-  document.getElementById('back-btn').addEventListener('click', () => {
-    navigate('#/');
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Init
-// ---------------------------------------------------------------------------
-
-async function init() {
-  setupSearch();
-  setupBackButton();
-  await Promise.all([fetchCategories(), fetchTags()]);
-  await handleRoute();
-  window.addEventListener('hashchange', handleRoute);
-}
-
-document.addEventListener('DOMContentLoaded', init);
-
-// ---------------------------------------------------------------------------
 // Three.js Thumbnail Renderer
 // ---------------------------------------------------------------------------
 
@@ -918,19 +875,36 @@ function setupBackButton() {
 // Scan Progress
 // ---------------------------------------------------------------------------
 
-let scanPollTimer = null;
+// ---------------------------------------------------------------------------
+// Scan
+// ---------------------------------------------------------------------------
 
 function setupScanButton() {
   const btn = document.getElementById('scan-btn');
   btn.addEventListener('click', async () => {
     btn.disabled = true;
+    showScanProgress();
     const result = await api('/api/scan', { method: 'POST' });
-    if (result && result.status === 'started') {
-      showScanProgress();
-      startScanPolling();
-    } else {
-      btn.disabled = false;
+    if (!result || result.status !== 'started') {
+      hideScanProgress();
+      return;
     }
+    // Poll until done
+    const poll = setInterval(async () => {
+      try {
+        const resp = await fetch('/api/scan/status');
+        const status = await resp.json();
+        if (status.status !== 'running') {
+          clearInterval(poll);
+          hideScanProgress();
+          fetchCategories().then(renderCategories);
+          fetchTags().then(renderTags);
+          fetchFolders().then(renderFolderGrid);
+        }
+      } catch (e) {
+        // keep polling
+      }
+    }, 500);
   });
 }
 
@@ -941,31 +915,6 @@ function showScanProgress() {
 function hideScanProgress() {
   document.getElementById('scan-progress').hidden = true;
   document.getElementById('scan-btn').disabled = false;
-}
-
-function startScanPolling() {
-  scanPollTimer = setInterval(async () => {
-    const status = await api('/api/scan/status');
-    if (!status) return;
-
-    const fill = document.getElementById('progress-fill');
-    const text = document.getElementById('progress-text');
-
-    if (status.status === 'running') {
-      const pct = status.total > 0
-        ? Math.round((status.processed / status.total) * 100)
-        : 0;
-      fill.style.width = pct + '%';
-      text.textContent = `Scanning... ${status.processed || 0}/${status.total || '?'}`;
-    } else if (status.status === 'complete' || status.status === 'error') {
-      clearInterval(scanPollTimer);
-      scanPollTimer = null;
-      hideScanProgress();
-      // Refresh data
-      await Promise.all([fetchCategories(), fetchTags()]);
-      await handleRoute();
-    }
-  }, 2000);
 }
 
 // ---------------------------------------------------------------------------
