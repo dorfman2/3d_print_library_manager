@@ -39,6 +39,8 @@
 # Generated / runtime data
 # ==================================================
 .library/library.db
+.library/library.db-shm
+.library/library.db-wal
 .library/thumbnails/
 
 # ==================================================
