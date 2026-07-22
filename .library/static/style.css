@@ -119,6 +119,31 @@ body {
   color: var(--primary);
 }
 
+.header__about-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-style: italic;
+  font-family: Georgia, serif;
+  color: var(--text-muted);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.header__about-btn:hover {
+  background: var(--bg);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 .header__scan-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
