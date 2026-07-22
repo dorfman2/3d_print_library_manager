@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "description": "Merged starter library — work + hobby categories. Fully editable per user.",
+  "categories": [
+    {
+      "name": "0 - Calibration",
+      "keywords": ["calibration", "calibrate", "benchy", "benchmark", "stringing", "overhang", "retraction", "ironing", "tolerance", "first layer", "flow rate", "temp tower", "temperature tower", "input shaping"]
+    },
+    {
+      "name": "1 - Machines",
+      "keywords": ["ender", "prusa", "bambu", "creality", "voron", "ratrig", "anycubic", "elegoo", "drawbot", "extruder", "hotend", "hot end", "fan duct", "bowden", "filament", "nozzle", "heatbreak", "heat break", "bed level", "klipper", "marlin", "x1c", "p1s", "a1 mini", "core one", "print head", "carriage", "idler", "tensioner"]
+    },
+    {
+      "name": "2 - Home and Household",
+      "keywords": ["kitchen", "bathroom", "planter", "vase", "hook", "curtain", "shelf", "door", "toilet", "soap", "toothbrush", "towel", "cabinet", "drawer", "furniture", "musubi", "sushi", "press", "food", "bento", "air purifier", "bag clip", "chopstick", "clothespin", "boot dryer", "card game"]
+    },
+    {
+      "name": "3 - Office",
+      "keywords": ["desk", "monitor", "keyboard", "phone stand", "phone holder", "cable", "webcam", "speaker", "headphone", "headset", "pen holder", "office", "laptop", "tablet", "mousepad"]
+    },
+    {
+      "name": "4 - Tools and Organization",
+      "keywords": ["tool", "wrench", "screwdriver", "storage", "bin", "organizer", "pegboard", "peg board", "workshop", "drill", "clamp", "workbench", "tray", "sorter", "gridfinity", "stencil", "fume extractor", "vise", "cookie cutter", "french cleat", "picture frame", "espresso", "tape maker"]
+    },
+    {
+      "name": "5 - Repairs and Replacements",
+      "keywords": ["repair", "replacement", "replace", "spare part", "snap", "end cap", "endcap", "battery", "phone case"]
+    },
+    {
+      "name": "6 - Electronics",
+      "keywords": ["raspberry pi", "arduino", "esp32", "esp8266", "electronics", "iot", "enclosure", "pcb", "sensor", "relay", "wemos", "pi zero", "rpi", "rak", "wisblock", "heltec", "seeed", "meshtastic", "lora", "lorawan", "tracker", "gateway", "t1000", "holster"]
+    },
+    {
+      "name": "7 - Gifts and Toys",
+      "keywords": ["gift", "toy", "fidget", "novelty", "kids", "children", "spinner", "puzzle", "holiday"]
+    },
+    {
+      "name": "8 - Models and Display",
+      "keywords": ["model", "display", "sculpture", "bust", "figurine", "decorative", "statue", "diorama", "book nook", "lithophane"]
+    },
+    {
+      "name": "9 - Tabletop",
+      "keywords": ["tabletop", "dungeon", "terrain", "dnd", "d&d", "warhammer", "40k", "pathfinder", "rpg", "scenery", "tiles", "scatter", "minis", "catan", "tankard"]
+    },
+    {
+      "name": "10 - RC Flight",
+      "keywords": ["drone", "quadcopter", "fpv", "rc car", "rc truck", "remote control", "traxxas", "losi", "arrma", "eclipson"]
+    },
+    {
+      "name": "11 - MultiBoard",
+      "keywords": ["multiboard", "multi-board", "multi board"]
+    },
+    {
+      "name": "12 - MMU",
+      "keywords": ["mmu", "multi material", "multimaterial", "ams", "purge tower", "hueforge", "multicolor"]
+    },
+    {
+      "name": "13 - NERF",
+      "keywords": ["nerf", "blaster", "dart", "rapidstrike", "stryfe"]
+    },
+    {
+      "name": "14 - Legos",
+      "keywords": ["lego", "legos", "moc", "technic", "duplo"]
+    },
+    {
+      "name": "15 - Cosplay",
+      "keywords": ["cosplay", "costume", "prop", "armor", "helmet", "sword", "shield", "gauntlet"]
+    },
+    {
+      "name": "16 - Work Fixtures and Tooling",
+      "keywords": ["work holding", "workholding", "assembly fixture", "bend jig", "molex", "preforming", "preforming jig", "insert tool", "alignment sleeve", "gauge", "tooling", "jig", "fixture", "training board"]
+    },
+    {
+      "name": "17 - Work Spare Parts",
+      "keywords": ["jam nut", "jamnut", "contact block", "part number", "gse", "spare assembly", "outlet holder", "cart bracket"]
+    },
+    {
+      "name": "18 - Mounting",
+      "keywords": ["mount", "wall mount", "vesa", "din rail", "rail mount", "arm mount", "bracket mount", "panel mount"]
+    },
+    {
+      "name": "Uncategorized",
+      "keywords": []
+    }
+  ]
+}

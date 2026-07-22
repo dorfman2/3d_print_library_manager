@@ -43,6 +43,10 @@
 .library/library.db-wal
 .library/thumbnails/
 
+# Runtime config (seeded on first run; .default.json IS tracked)
+.library/config.json
+.library/categories.json
+
 # ==================================================
 # PII and secrets
 # ==================================================
