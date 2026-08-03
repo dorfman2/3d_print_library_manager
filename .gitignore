@@ -47,6 +47,10 @@
 .library/config.json
 .library/categories.json
 
+# launchd service logs
+.library/server.out.log
+.library/server.err.log
+
 # ==================================================
 # PII and secrets
 # ==================================================
