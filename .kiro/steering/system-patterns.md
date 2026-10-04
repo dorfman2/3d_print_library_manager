@@ -21,6 +21,26 @@ inclusion: always
 - Folder names contain special chars: `=`, `+`, Unicode dashes, parentheses — full paths must be quoted/escaped
 - SHA-256 hashing ~700 files of mixed sizes takes <30 seconds on SSD
 
+### Deployment / autostart learnings
+- macOS launchd + Downloads (TCC-protected) is hard: launchd-spawned processes get no
+  interactive TCC prompt, so Downloads access is silently denied (EPERM).
+- Apple's CommandLineTools framework Python CANNOT be granted Full Disk Access reliably
+  (root-signed, Apple-owned) — tried matching plist path + logout, still denied.
+- FIX that works on macOS: install the official python.org interpreter (Developer-ID
+  signed, Team BMM5U3QVKW), `pip install flask` into it, point the launchd plist at
+  `/Library/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python`,
+  grant THAT binary Full Disk Access, then LOG OUT/IN (clears launchd's cached TCC denial —
+  a bootout/bootstrap alone is NOT enough). TCC identifies it by code signature so the
+  grant survives patch upgrades. launchd agent: `~/Library/LaunchAgents/com.3dprint.library.plist`.
+- Windows has NO equivalent Downloads restriction — the Flask server reads Downloads fine.
+- Windows autostart: Task Scheduler via `schtasks /create /xml`. Gotcha: schtasks REQUIRES
+  the XML be true UTF-16 (declaration `encoding="UTF-16"` + UTF-16LE bytes); UTF-8 fails with
+  "unable to switch the encoding". Build XML locally, ship as base64, write with PowerShell
+  `Set-Content -Encoding Unicode`.
+- A long-running scheduled task shows Last Result `267009` (0x41301 = "task currently running"),
+  which is SUCCESS, not an error.
+- `.3mf` ZIP finding re-confirmed cross-platform.
+
 ## System Architecture
 ```
 User Browser (localhost:5050)
