@@ -8,8 +8,10 @@ source (Downloads) and library folders cross-platform.
 
 import json
 import logging
+import os
+import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,21 +32,59 @@ DEFAULT_CONFIG: dict[str, Any] = {
 }
 
 
+def _windows_downloads_from_registry() -> Optional[Path]:
+    """
+    Read the real Downloads folder path from the Windows registry.
+
+    Windows users can relocate their Downloads folder; the authoritative
+    location is the Known Folders GUID stored under the Shell Folders key.
+    This reads that value and expands any embedded environment variables.
+
+    Returns
+    -------
+    Optional[Path]
+        The resolved Downloads path, or None if it cannot be determined
+        (non-Windows, missing key, or any registry error).
+    """
+    if sys.platform != "win32":
+        return None
+    try:
+        import winreg  # Windows-only stdlib; imported lazily
+
+        key_path = (
+            r"Software\Microsoft\Windows\CurrentVersion"
+            r"\Explorer\Shell Folders"
+        )
+        guid = "{374DE290-123F-4565-9164-39C4925E467B}"
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
+            value, _ = winreg.QueryValueEx(key, guid)
+        return Path(os.path.expandvars(value))
+    except (ImportError, OSError, FileNotFoundError) as exc:
+        logger.warning("Could not read Downloads folder from registry: %s", exc)
+        return None
+
+
 def resolve_downloads_folder() -> Path:
     """
     Resolve the OS Downloads folder cross-platform.
 
-    Returns the user's ~/Downloads directory on both macOS and Windows.
-    Falls back to the home directory if ~/Downloads does not exist.
+    On Windows, prefers the real (possibly relocated) Downloads folder from
+    the registry. Otherwise uses ~/Downloads. Falls back to the home
+    directory if nothing valid is found.
 
     Returns
     -------
     Path
         Absolute path to the Downloads folder.
     """
+    win_downloads = _windows_downloads_from_registry()
+    if win_downloads and win_downloads.is_dir():
+        return win_downloads
+
     downloads: Path = Path.home() / "Downloads"
     if downloads.is_dir():
         return downloads
+
     logger.warning(
         "Downloads folder not found at %s, falling back to home directory",
         downloads,

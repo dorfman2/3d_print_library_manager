@@ -7,6 +7,7 @@ Binds to 127.0.0.1:5050 only.
 """
 
 import logging
+import os
 import platform
 import subprocess
 import threading
@@ -669,12 +670,13 @@ def api_open_file(file_id: int):
             if system == "Darwin":
                 subprocess.run(["open", str(file_path)], check=True)
             elif system == "Windows":
-                subprocess.run(
-                    ["cmd", "/c", "start", "", str(file_path)], check=True
-                )
+                # os.startfile launches in the default app without a console
+                # flash or shell-quoting issues. Windows-only, so reference it
+                # inside this branch.
+                os.startfile(str(file_path))  # type: ignore[attr-defined]  # noqa: E501
             else:
                 subprocess.run(["xdg-open", str(file_path)], check=True)
-        except subprocess.CalledProcessError as exc:
+        except (subprocess.CalledProcessError, OSError) as exc:
             logger.error("Failed to open file %s: %s", file_path, exc)
             return jsonify({"error": "Failed to open file"}), 500
 
@@ -712,15 +714,14 @@ def api_reveal_file(file_id: int):
             if system == "Darwin":
                 subprocess.run(["open", "-R", str(file_path)], check=True)
             elif system == "Windows":
-                subprocess.run(
-                    ["explorer", "/select,", str(file_path)], check=True
-                )
+                # explorer.exe returns exit code 1 even on success, so do NOT
+                # use check=True. The selector and path must be a single arg:
+                # "/select,<path>".
+                subprocess.run(["explorer", f"/select,{file_path}"])
             else:
                 # Linux: open parent directory
-                subprocess.run(
-                    ["xdg-open", str(file_path.parent)], check=True
-                )
-        except subprocess.CalledProcessError as exc:
+                subprocess.run(["xdg-open", str(file_path.parent)], check=True)
+        except (subprocess.CalledProcessError, OSError) as exc:
             logger.error("Failed to reveal file %s: %s", file_path, exc)
             return jsonify({"error": "Failed to reveal file"}), 500
 
