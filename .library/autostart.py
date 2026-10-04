@@ -162,9 +162,11 @@ def _windows_task_xml(pythonw: str) -> str:
     str
         The task definition XML (declaration states UTF-16).
     """
-    user = f"{_win_domain()}\\{getpass.getuser()}"
-    # Principal resolves most reliably by SID; the trigger accepts domain\user.
-    principal_id = _win_current_sid() or user
+    # Both trigger and principal resolve most reliably by SID. USERDOMAIN over
+    # a remote/SSH session can be the workgroup (e.g. WORKGROUP\user), which
+    # fails account->SID mapping; the SID always maps. Fall back to
+    # domain\user only if the SID is unavailable.
+    account_id = _win_current_sid() or f"{_win_domain()}\\{getpass.getuser()}"
     return (
         '<?xml version="1.0" encoding="UTF-16"?>\n'
         '<Task version="1.2" '
@@ -172,9 +174,9 @@ def _windows_task_xml(pythonw: str) -> str:
         "  <RegistrationInfo><Description>3D Print Library Manager server"
         "</Description></RegistrationInfo>\n"
         "  <Triggers><LogonTrigger><Enabled>true</Enabled>"
-        f"<UserId>{user}</UserId></LogonTrigger></Triggers>\n"
+        f"<UserId>{account_id}</UserId></LogonTrigger></Triggers>\n"
         '  <Principals><Principal id="Author">'
-        f"<UserId>{principal_id}</UserId>"
+        f"<UserId>{account_id}</UserId>"
         "<LogonType>InteractiveToken</LogonType>"
         "<RunLevel>LeastPrivilege</RunLevel></Principal></Principals>\n"
         "  <Settings>\n"
