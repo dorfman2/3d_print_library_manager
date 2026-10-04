@@ -163,6 +163,8 @@ def _windows_task_xml(pythonw: str) -> str:
         The task definition XML (declaration states UTF-16).
     """
     user = f"{_win_domain()}\\{getpass.getuser()}"
+    # Principal resolves most reliably by SID; the trigger accepts domain\user.
+    principal_id = _win_current_sid() or user
     return (
         '<?xml version="1.0" encoding="UTF-16"?>\n'
         '<Task version="1.2" '
@@ -172,7 +174,7 @@ def _windows_task_xml(pythonw: str) -> str:
         "  <Triggers><LogonTrigger><Enabled>true</Enabled>"
         f"<UserId>{user}</UserId></LogonTrigger></Triggers>\n"
         '  <Principals><Principal id="Author">'
-        f"<UserId>{user}</UserId>"
+        f"<UserId>{principal_id}</UserId>"
         "<LogonType>InteractiveToken</LogonType>"
         "<RunLevel>LeastPrivilege</RunLevel></Principal></Principals>\n"
         "  <Settings>\n"
@@ -199,6 +201,28 @@ def _win_domain() -> str:
     """Return the local machine/domain name for the task principal."""
     import os
     return os.environ.get("USERDOMAIN", os.environ.get("COMPUTERNAME", "."))
+
+
+def _win_current_sid() -> Optional[str]:
+    """
+    Return the current user's SID via `whoami /user`.
+
+    schtasks resolves a <Principal> SID reliably, whereas a ``domain\\user``
+    string can fail with "No mapping between account names and security IDs"
+    in non-interactive contexts (e.g. over SSH). Returns None if unavailable.
+    """
+    try:
+        out = subprocess.run(
+            ["whoami", "/user", "/fo", "list"],
+            capture_output=True, text=True, check=True,
+        ).stdout
+        for line in out.splitlines():
+            if "S-1-" in line:
+                return line.split(":", 1)[1].strip() if ":" in line else \
+                    line.strip()
+    except (OSError, subprocess.CalledProcessError):
+        pass
+    return None
 
 
 def _install_windows(python_exe: str) -> None:
